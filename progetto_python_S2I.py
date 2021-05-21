@@ -20,7 +20,7 @@ class Report:
         database = requests.get(url=self.url, headers=self.headers, params=self.params).json()
         return database["data"]
 
-    def volume_maggiore(self):
+    def volume_maggiore(self): #Richiesta 1
         risultati_report = Report()
         insieme_criptovalute = risultati_report.dati_aggiornati()
         nome_criptovaluta = []
@@ -31,7 +31,7 @@ class Report:
                 nome_criptovaluta = criptovaluta["name"]
         return nome_criptovaluta, volume_criptovaluta
 
-    def incremento_percentuale_migliori_e_peggiori_24h(self):
+    def incremento_percentuale_migliori_e_peggiori_24h(self): #Richiesta 2
         risultati_report = Report()
         insieme_criptovalute = risultati_report.dati_aggiornati()
         nome_criptovaluta = []
@@ -48,7 +48,27 @@ class Report:
         peggiori_10 = list(dizionario_ordinato_peggiori_criptovalute[:10])
         return migliori_10, peggiori_10
 
-    def acquisto_volume_maggiore_24h(self):
+    def denaro_necessario_acquisto_prime_20_criptovalute(self): #Richiesta 3
+        risultati_report = Report()
+        insieme_criptovalute = risultati_report.dati_aggiornati()
+        lista_capitalizzazione_criptovalute = {}
+        lista_migliori_20_cap = []
+        denaro_necessario = 0
+
+        for criptovaluta in insieme_criptovalute:
+            lista_capitalizzazione_criptovalute[criptovaluta["quote"]["USD"]["market_cap"]] = criptovaluta["name"]
+
+        for elemento in sorted(lista_capitalizzazione_criptovalute.keys(), reverse=True):
+            if len(lista_migliori_20_cap) < 20:
+                lista_migliori_20_cap.append((lista_capitalizzazione_criptovalute[elemento], elemento))
+
+        for criptovaluta in insieme_criptovalute:
+            for y in range(20):
+                if lista_migliori_20_cap[y][0] == criptovaluta["name"]:
+                    denaro_necessario += criptovaluta["quote"]["USD"]["price"]
+        return lista_capitalizzazione_criptovalute, lista_migliori_20_cap, denaro_necessario
+
+    def acquisto_volume_maggiore_24h(self): #Richiesta 4
         risultati_report = Report()
         insieme_criptovalute = risultati_report.dati_aggiornati()
         lista_criptovalute_volume_maggiore_24h = []
@@ -60,14 +80,40 @@ class Report:
                 denaro_necessario += criptovaluta["quote"]["USD"]["price"]
         return lista_criptovalute_volume_maggiore_24h, volume_24_riferimento, denaro_necessario
 
+    def guadagno_perdita_percentuale(self): #Richiesta 5
+        risultati_report = Report()
+        insieme_criptovalute = risultati_report.dati_aggiornati()
+
+        lista_capitalizzazione = {}
+        lista_migliori_20 = []
+        prezzo_totale = 0
+        prezzo_totale_precedente = 0
+
+        for criptovaluta in insieme_criptovalute:
+            lista_capitalizzazione[criptovaluta["quote"]["USD"]["market_cap"]] = criptovaluta["name"]
+        for elemento in sorted(lista_capitalizzazione.keys(), reverse=True):
+            if len(lista_migliori_20) < 20:
+                lista_migliori_20.append((lista_capitalizzazione[elemento], elemento))
+
+        for criptovaluta in insieme_criptovalute:
+            for x in range(20):
+                if lista_migliori_20[x][0] == criptovaluta["name"]:
+                    prezzo_totale += criptovaluta["quote"]["USD"]["price"]
+                    prezzo_totale_precedente += criptovaluta["quote"]["USD"]["price"] - ((criptovaluta["quote"]["USD"]["price"] * criptovaluta["quote"]["USD"]["percent_change_24h"]) / 100)
+
+        perdita_guadagno_percentuale = ((prezzo_totale_precedente * 100) - (prezzo_totale * 100)) / -prezzo_totale
+        return lista_migliori_20, prezzo_totale, prezzo_totale_precedente, perdita_guadagno_percentuale
+
     def stampa(self):
         nome_richiesta_1, volume_richiesta_1 = Report.volume_maggiore(self)
         migliori_10, peggiori_10 = Report.incremento_percentuale_migliori_e_peggiori_24h(self)
         lista_criptovalute_volume_maggiore_24h, volume_24_riferimento, denaro_necessario = Report.acquisto_volume_maggiore_24h(self)
+        lista_migliori_20, prezzo_totale, prezzo_totale_precedente, perdita_guadagno_percentuale = Report.guadagno_perdita_percentuale(self)
+        lista_capitalizzazione_criptovalute, lista_migliori_20_cap, denaro_necessario = Report.denaro_necessario_acquisto_prime_20_criptovalute(self)
 
         #Richiesta 1
         print(f"\nLa criptovaluta con il volume maggiore nelle ultime 24 ore è: {nome_richiesta_1}\n"
-               f"Il suo volume corrisponde a: {volume_richiesta_1}$")
+               f"Il suo volume corrisponde a: {volume_richiesta_1} $")
 
         #Richiesta 2
         print(f"\nLe 10 criptovalute con l'incremento percentuale MIGLIORE nelle ultime 24 ore sono:")
@@ -78,15 +124,32 @@ class Report:
         for y in peggiori_10:
             print(y)
 
+        #Richiesta 3
+        print(f"\n\nLista delle {len(lista_migliori_20_cap)} criptovalute per capitalizzazione di mercato:")
+        for x in lista_migliori_20_cap:
+            print(x)
+
+        print(
+            f"\nDenaro necessario per comprare ognuna delle {len(lista_migliori_20_cap)} criptovalute: {denaro_necessario} $")
+
         #Richiesta 4
-        print(f"\n\nNumero criptovalute con volume superiore a {volume_24_riferimento}$ nelle ultime 24 ore:\n{len(lista_criptovalute_volume_maggiore_24h)}")
-        print(f"Denaro necessario per acquistare una unità di queste {len(lista_criptovalute_volume_maggiore_24h)} criptovalute:\n{denaro_necessario}$")
+        print(f"\n\nNumero criptovalute con volume superiore a {volume_24_riferimento} $ nelle ultime 24 ore: {len(lista_criptovalute_volume_maggiore_24h)}")
+        print(f"Denaro necessario per comprare ognuna delle {len(lista_criptovalute_volume_maggiore_24h)} criptovalute: {denaro_necessario} $")
         print(f"\nLista delle {len(lista_criptovalute_volume_maggiore_24h)} criptovalute:")
         for criptovaluta in lista_criptovalute_volume_maggiore_24h:
             print(criptovaluta)
+
+        #Richiesta 5
+        print(f"\n\nAnalisi prezzo totale di acquisto tra ieri ed oggi sulle migliori {len(lista_migliori_20)} criptovalute per capitalizzazione:")
+        print(f"- Prezzo totale (ieri): {prezzo_totale_precedente} $")
+        print(f"- Prezzo totale (oggi): {prezzo_totale} $")
+
+        if prezzo_totale > prezzo_totale_precedente:
+            print(f"- Percentuale di guadagno: {perdita_guadagno_percentuale} %")
+        else:
+            print(f"- Percentuale di perdita: {perdita_guadagno_percentuale} %")
         return f"\nGrazie per l'attenzione"
 
 
 risultati = Report()
-
 print(risultati.stampa())
