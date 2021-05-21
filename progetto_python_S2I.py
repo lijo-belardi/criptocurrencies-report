@@ -129,8 +129,7 @@ class Report:
         for x in lista_migliori_20_cap:
             print(x)
 
-        print(
-            f"\nDenaro necessario per comprare ognuna delle {len(lista_migliori_20_cap)} criptovalute: {denaro_necessario} $")
+        print(f"\nDenaro necessario per comprare ognuna delle {len(lista_migliori_20_cap)} criptovalute: {denaro_necessario} $")
 
         #Richiesta 4
         print(f"\n\nNumero criptovalute con volume superiore a {volume_24_riferimento} $ nelle ultime 24 ore: {len(lista_criptovalute_volume_maggiore_24h)}")
